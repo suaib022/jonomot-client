@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+  }
+
+  .dark {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+  }
+}
+
+@layer base {
+  body {
+    color: hsl(var(--foreground));
+    background-color: white;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .quill-content ul {
+    @apply list-disc ml-5;
+  }
+  .quill-content ol {
+    @apply list-decimal ml-5;
+  }
+  .quill-content strong {
+    @apply font-bold;
+  }
+  .quill-content em {
+    @apply italic;
+  }
+  .quill-content p {
+    @apply mb-2;
+  }
+}
+
+@layer utilities {
+  .ql-editor {
+    @apply text-[16px];
+  }
+}
+
+.ql-editor {
+  font-size: 16px !important;
+}
