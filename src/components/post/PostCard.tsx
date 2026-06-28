@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { IPost } from '../../redux/features/post/postApi';
 import { useDeletePostMutation } from '../../redux/features/post/postApi';
 import { useAppSelector } from '../../redux/hooks';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
+import { useGetMyVotesQuery, useCastVoteMutation } from '../../redux/features/vote/voteApi';
 
 interface PostCardProps {
   post: IPost;
@@ -53,8 +54,17 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const currentUser = useAppSelector((state) => state.auth.user);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
+  const [castVote] = useCastVoteMutation();
+  const navigate = useNavigate();
+  const { data: myVotesRes } = useGetMyVotesQuery(undefined, {
+    skip: !currentUser, // only fetch if logged in
+  });
+
+  const myVotes = myVotesRes?.data || [];
+  const myVote = myVotes.find(v => v.TARGET_ID === postId && v.TARGET_TYPE === 'POST');
 
   const isOwner = (currentUser?.userId || (currentUser as any)?.user_id) == userId;
+  const isAdmin = currentUser?.role === 'admin';
   console.log('PostCard Debug ->', {
     postUserId: userId, 
     currentUser: currentUser, 
@@ -84,8 +94,28 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     }
   };
 
+  const handleVote = async (e: React.MouseEvent, type: 1 | -1) => {
+    e.stopPropagation();
+    if (!currentUser) {
+      toast.error('You must be logged in to vote.');
+      return;
+    }
+    if (isAdmin) {
+      toast.error('Admins are not allowed to vote.');
+      return;
+    }
+    try {
+      await castVote({ target_id: postId, target_type: 'POST', vote_type: type }).unwrap();
+    } catch (err: any) {
+      toast.error(err.data?.message || 'Failed to cast vote');
+    }
+  };
+
   return (
-    <div className="cursor-pointer transition-colors flex bg-transparent rounded-[16px] p-4 hover:bg-[#EAEDF0]">
+    <div 
+      onClick={() => navigate(`/post/${postId}`)}
+      className="cursor-pointer transition-colors flex bg-transparent rounded-[16px] p-4 hover:bg-[#EAEDF0]"
+    >
       
       {/* Main Content Area */}
       <div className="flex-1">
@@ -184,23 +214,32 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <div className="flex items-center gap-2 mt-2">
           {/* Upvote/Downvote Pill */}
           <div className="flex items-center bg-white border border-gray-200 rounded-full h-9 transition-colors">
-            <button className="flex items-center justify-center w-8 h-full rounded-l-full text-gray-700 hover:bg-gray-100 hover:text-orange-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+            <button 
+              onClick={(e) => handleVote(e, 1)}
+              className={`flex items-center justify-center w-8 h-full rounded-l-full hover:bg-gray-100 ${myVote?.VOTE_TYPE === 1 ? 'text-orange-600 bg-orange-50' : 'text-gray-700 hover:text-orange-600'}`}
+            >
+              <svg className="w-5 h-5" fill={myVote?.VOTE_TYPE === 1 ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l-5 7h3v11h4V10h3z" />
               </svg>
             </button>
-            <span className="text-[13px] font-bold text-gray-900 px-1">
+            <span className={`text-[13px] font-bold px-1 ${myVote?.VOTE_TYPE === 1 ? 'text-orange-600' : myVote?.VOTE_TYPE === -1 ? 'text-indigo-600' : 'text-gray-900'}`}>
               {upvotes - downvotes}
             </span>
-            <button className="flex items-center justify-center w-8 h-full rounded-r-full text-gray-700 hover:bg-gray-100 hover:text-indigo-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+            <button 
+              onClick={(e) => handleVote(e, -1)}
+              className={`flex items-center justify-center w-8 h-full rounded-r-full hover:bg-gray-100 ${myVote?.VOTE_TYPE === -1 ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:text-indigo-600'}`}
+            >
+              <svg className="w-5 h-5" fill={myVote?.VOTE_TYPE === -1 ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 21l-5-7h3V3h4v11h3z" />
               </svg>
             </button>
           </div>
 
           {/* Comments Pill */}
-          <button className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold text-gray-800 transition-colors">
+          <button 
+            onClick={(e) => { e.stopPropagation(); navigate(`/post/${postId}`); }}
+            className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold text-gray-800 transition-colors"
+          >
             <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
             </svg>
@@ -208,7 +247,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </button>
           
           {/* Share Pill */}
-          <button className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold text-gray-800 transition-colors">
+          <button 
+            onClick={(e) => { e.stopPropagation(); }}
+            className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold text-gray-800 transition-colors"
+          >
             <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
             </svg>
@@ -216,7 +258,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </button>
           
           {/* Save Pill */}
-          <button className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold text-gray-800 transition-colors">
+          <button 
+            onClick={(e) => { e.stopPropagation(); }}
+            className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold text-gray-800 transition-colors"
+          >
             <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>

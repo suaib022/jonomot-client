@@ -21,16 +21,6 @@ export const PostFeed: React.FC<{ communityId?: number }> = ({ communityId }) =>
 
   let posts = res?.data || [];
   
-  // Set fake counts to 0 after fetching
-  posts = posts.map((p: any) => ({
-    ...p,
-    upvote_count: 0,
-    downvote_count: 0,
-    comment_count: 0,
-    UPVOTE_COUNT: 0,
-    DOWNVOTE_COUNT: 0,
-    COMMENT_COUNT: 0
-  }));
 
   if (communityId) {
     posts = posts.filter((p: any) => p.community_id === communityId || p.COMMUNITY_ID === communityId);

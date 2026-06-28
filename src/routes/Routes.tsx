@@ -3,6 +3,7 @@ import App from '../App';
 import Home from '../pages/Home';
 import CreatePost from '../pages/CreatePost';
 import Community from '../pages/Community';
+import PostDetail from '../pages/PostDetail';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
       {
         path: '/j/:communityName',
         element: <Community />,
+      },
+      {
+        path: '/post/:postId',
+        element: <PostDetail />,
       }
     ]
   },

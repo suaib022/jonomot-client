@@ -15,7 +15,7 @@ export default function Home() {
   }).slice(0, 3);
 
   return (
-    <div className="max-w-[1100px] mx-auto w-full px-4 pt-6 pb-12 flex flex-col md:flex-row gap-6">
+    <div className="max-w-[1280px] mx-auto w-full px-4 pt-6 pb-12 flex flex-col md:flex-row gap-6">
       {/* Main Content Area */}
       <div className="flex-1 w-full min-w-0">
         <PostFeed />
@@ -35,8 +35,9 @@ export default function Home() {
             ) : (
               recentPosts.map((post: any) => {
                 const communityName = post.community_name || post.COMMUNITY_NAME || post.community_id || post.COMMUNITY_ID;
-                const upvotes = 0; // Fake engagement reset
-                const comments = 0; // Fake engagement reset
+                const upvotes = (post.upvote_count ?? (post as any).UPVOTE_COUNT) || 0;
+                const downvotes = (post.downvote_count ?? (post as any).DOWNVOTE_COUNT) || 0;
+                const comments = (post.comment_count ?? (post as any).COMMENT_COUNT) || 0;
                 
                 return (
                   <div key={post.post_id || post.POST_ID} className="group cursor-pointer">
@@ -66,7 +67,7 @@ export default function Home() {
                       {post.title || post.TITLE}
                     </h3>
                     <p className="text-[13px] text-gray-500 mt-1">
-                      {upvotes} upvotes • {comments} comments
+                      {upvotes - downvotes} upvotes • {comments} comments
                     </p>
                   </div>
                 );
