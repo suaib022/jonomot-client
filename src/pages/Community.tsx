@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGetAllCommunitiesQuery, useJoinCommunityMutation, useLeaveCommunityMutation, useGetJoinedCommunitiesQuery, useGetCommunityMembersQuery } from '../redux/features/community/communityApi';
 import { useAppSelector } from '../redux/hooks';

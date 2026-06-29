@@ -38,7 +38,7 @@ export const communityApi = baseApi.injectEndpoints({
     }),
     getCommunityMembers: builder.query({
       query: (communityId) => `/communities/${communityId}/members`,
-      providesTags: (result, error, id) => [{ type: 'Community', id: `members-${id}` }],
+      providesTags: (_result, _error, id) => [{ type: 'Community', id: `members-${id}` }],
     }),
     updateMemberRole: builder.mutation({
       query: ({ communityId, userId, role }) => ({
@@ -46,14 +46,14 @@ export const communityApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body: { user_id: userId, role },
       }),
-      invalidatesTags: (result, error, { communityId }) => [{ type: 'Community', id: `members-${communityId}` }],
+      invalidatesTags: (_result, _error, { communityId }) => [{ type: 'Community', id: `members-${communityId}` }],
     }),
     removeMember: builder.mutation({
       query: ({ communityId, userId }) => ({
         url: `/communities/${communityId}/members/${userId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, { communityId }) => [{ type: 'Community', id: `members-${communityId}` }],
+      invalidatesTags: (_result, _error, { communityId }) => [{ type: 'Community', id: `members-${communityId}` }],
     }),
   }),
 });

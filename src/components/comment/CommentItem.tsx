@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { IComment } from '../../types/comment';
 import { useCreateCommentMutation } from '../../redux/features/comment/commentApi';
 import { useAppSelector } from '../../redux/hooks';
 import { formatTimeAgo } from '../../utils/time';
-import { MessageSquare, CornerDownRight } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CommentItemProps {
@@ -38,7 +39,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment, postId }) => 
   const isDisabled = !user || user.role === 'admin';
   const isRemoved = comment.is_removed || comment.IS_REMOVED;
   const username = comment.username || comment.USERNAME || 'unknown';
-  const timeAgo = formatTimeAgo(comment.created_at || comment.CREATED_AT);
+  const timeAgo = formatTimeAgo(comment.created_at || comment.CREATED_AT || new Date().toISOString());
   const body = comment.body || comment.BODY;
 
   return (
@@ -49,7 +50,9 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment, postId }) => 
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-[13px] text-gray-900">{username}</span>
+            <Link to={`/u/${username}`} className="font-semibold text-[13px] text-gray-900 hover:underline">
+              {username}
+            </Link>
             <span className="text-[12px] text-gray-500">• {timeAgo}</span>
           </div>
           

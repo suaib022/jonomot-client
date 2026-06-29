@@ -6,6 +6,7 @@ import Community from '../pages/Community';
 import PostDetail from '../pages/PostDetail';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import Profile from '../pages/Profile/Profile';
 
 import { PublicRoute } from './PublicRoute';
 
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
       {
         path: '/post/:postId',
         element: <PostDetail />,
+      },
+      {
+        path: '/u/:username',
+        element: <Profile />,
       }
     ]
   },

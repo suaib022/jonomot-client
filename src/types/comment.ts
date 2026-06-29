@@ -22,6 +22,8 @@ export interface IComment {
   CREATED_AT?: string;
   UPDATED_AT?: string;
   USERNAME?: string;
+  POST_TITLE?: string;
+  post_title?: string;
   // for tree building
   children?: IComment[];
   replies?: IComment[];

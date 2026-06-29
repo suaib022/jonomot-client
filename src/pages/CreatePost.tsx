@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { ChevronDown, Image as ImageIcon, Link as LinkIcon, List as ListIcon, Bold, Italic, Strikethrough, Superscript, Type, Video, ListOrdered, Quote, Code, SquareSlash, Table, MoreHorizontal, X } from 'lucide-react';
+import { ChevronDown, Image as ImageIcon, X } from 'lucide-react';
 import { useCreatePostMutation } from '../redux/features/post/postApi';
 import { useGetJoinedCommunitiesQuery } from '../redux/features/community/communityApi';
 import { useAppSelector } from '../redux/hooks';
@@ -37,7 +37,6 @@ export default function CreatePost() {
   const joinedCommunities = joinedResponse?.data || [];
 
   const [createPost, { isLoading }] = useCreatePostMutation();
-  const [selectedTab, setSelectedTab] = useState<'text' | 'images' | 'link' | 'poll'>('text');
   const [community, setCommunity] = useState<{ id: number; name: string } | null>(
     location.state?.community ? { id: Number(location.state?.community_id) || 0, name: location.state?.community } : null
   );

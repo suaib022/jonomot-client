@@ -54,7 +54,52 @@ const postApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Post'],
     }),
+    getPostsByUsername: builder.query<TResponse<IPost[]>, string>({
+      query: (username) => ({
+        url: `/posts/user/${username}`,
+        method: 'GET',
+      }),
+      providesTags: ['Post'],
+    }),
+    getUpvotedPosts: builder.query<TResponse<IPost[]>, string>({
+      query: (username) => ({
+        url: `/posts/user/${username}/upvoted`,
+        method: 'GET',
+      }),
+      providesTags: ['Post'],
+    }),
+    getDownvotedPosts: builder.query<TResponse<IPost[]>, string>({
+      query: (username) => ({
+        url: `/posts/user/${username}/downvoted`,
+        method: 'GET',
+      }),
+      providesTags: ['Post'],
+    }),
+    getSavedPosts: builder.query<TResponse<IPost[]>, string>({
+      query: (username) => ({
+        url: `/posts/user/${username}/saved`,
+        method: 'GET',
+      }),
+      providesTags: ['Post'],
+    }),
+    toggleSavePost: builder.mutation<TResponse<void>, number>({
+      query: (id) => ({
+        url: `/posts/${id}/save`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Post'],
+    }),
   }),
 });
 
-export const { useGetAllPostsQuery, useGetPostByIdQuery, useCreatePostMutation, useDeletePostMutation } = postApi;
+export const { 
+  useGetAllPostsQuery, 
+  useGetPostByIdQuery, 
+  useCreatePostMutation, 
+  useDeletePostMutation,
+  useGetPostsByUsernameQuery,
+  useGetUpvotedPostsQuery,
+  useGetDownvotedPostsQuery,
+  useGetSavedPostsQuery,
+  useToggleSavePostMutation
+} = postApi;

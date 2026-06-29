@@ -12,7 +12,7 @@ const commentApi = baseApi.injectEndpoints({
         url: `/comments/post/${postId}`,
         method: 'GET',
       }),
-      providesTags: (result, error, arg) => [{ type: 'Comment', id: arg }],
+      providesTags: (_result, _error, arg) => [{ type: 'Comment', id: arg }],
     }),
     createComment: builder.mutation<TResponse<any>, { post_id: number; parent_comment_id?: number | null; body: string }>({
       query: (body) => ({
@@ -20,16 +20,28 @@ const commentApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: (result, error, arg) => [{ type: 'Comment', id: arg.post_id }, 'Post'],
+      invalidatesTags: (_result, _error, arg) => [{ type: 'Comment', id: arg.post_id }, 'Post'],
     }),
     deleteComment: builder.mutation<TResponse<any>, { id: number; postId: number }>({
       query: ({ id }) => ({
         url: `/comments/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, arg) => [{ type: 'Comment', id: arg.postId }, 'Post'],
+      invalidatesTags: (_result, _error, arg) => [{ type: 'Comment', id: arg.postId }, 'Post'],
+    }),
+    getCommentsByUsername: builder.query<TResponse<IComment[]>, string>({
+      query: (username) => ({
+        url: `/comments/user/${username}`,
+        method: 'GET',
+      }),
+      providesTags: ['Comment'],
     }),
   }),
 });
 
-export const { useGetCommentsByPostQuery, useCreateCommentMutation, useDeleteCommentMutation } = commentApi;
+export const { 
+  useGetCommentsByPostQuery, 
+  useCreateCommentMutation, 
+  useDeleteCommentMutation,
+  useGetCommentsByUsernameQuery 
+} = commentApi;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { IPost } from '../../redux/features/post/postApi';
-import { useDeletePostMutation } from '../../redux/features/post/postApi';
+import { useDeletePostMutation, useToggleSavePostMutation } from '../../redux/features/post/postApi';
 import { useAppSelector } from '../../redux/hooks';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
@@ -59,9 +59,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { data: myVotesRes } = useGetMyVotesQuery(undefined, {
     skip: !currentUser, // only fetch if logged in
   });
+  
+  const [toggleSavePost] = useToggleSavePostMutation();
 
   const myVotes = myVotesRes?.data || [];
   const myVote = myVotes.find(v => v.TARGET_ID === postId && v.TARGET_TYPE === 'POST');
+
+  const username = (post as any).username || (post as any).USERNAME;
+  const displayUsername = username ? username : `user_${userId}`;
 
   const isOwner = (currentUser?.userId || (currentUser as any)?.user_id) == userId;
   const isAdmin = currentUser?.role === 'admin';
@@ -111,6 +116,20 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     }
   };
 
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentUser) {
+      toast.error('You must be logged in to save posts.');
+      return;
+    }
+    try {
+      await toggleSavePost(postId).unwrap();
+      toast.success('Saved status updated');
+    } catch (err: any) {
+      toast.error(err.data?.message || 'Failed to save post');
+    }
+  };
+
   return (
     <div 
       onClick={() => navigate(`/post/${postId}`)}
@@ -136,7 +155,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <span className="mx-1">•</span>
             </>
           )}
-          <span>Posted by u/user_{userId}</span>
+          <span>
+            Posted by <Link to={`/u/${displayUsername}`} onClick={(e) => e.stopPropagation()} className="hover:underline font-bold">u/{displayUsername}</Link>
+          </span>
           <span className="mx-1">{timeStr}</span>
         </div>
 
@@ -201,7 +222,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 
                 {/* Dots indicator */}
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-                  {media.map((_, idx) => (
+                  {media.map((_: any, idx: number) => (
                     <div key={idx} className={`w-2 h-2 rounded-full ${idx === currentImageIndex ? 'bg-white' : 'bg-white/50'}`} />
                   ))}
                 </div>
@@ -259,7 +280,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           
           {/* Save Pill */}
           <button 
-            onClick={(e) => { e.stopPropagation(); }}
+            onClick={handleSave}
             className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold text-gray-800 transition-colors"
           >
             <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">

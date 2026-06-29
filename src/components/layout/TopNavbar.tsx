@@ -85,7 +85,15 @@ export const TopNavbar: React.FC = () => {
             {/* Dropdown Menu */}
             {isDropdownOpen && (
               <div className="absolute right-0 top-12 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50">
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-3">
+                <button 
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    if (user?.username) {
+                      navigate(`/u/${user.username}`);
+                    }
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                >
                   <User className="w-4 h-4 text-gray-500" />
                   View Profile
                 </button>

@@ -3,11 +3,13 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../store';
 
 export type TUser = {
-  userId: number;
+  userId?: number;
+  user_id?: number;
+  username?: string;
   role: 'user' | 'admin';
   email: string;
-  iat: number;
-  exp: number;
+  iat?: number;
+  exp?: number;
 };
 
 type TAuthState = {
