@@ -15,6 +15,14 @@ export interface IPost {
   community_name?: string;
   created_at?: string;
   updated_at?: string;
+  // Opportunity Fields
+  org_name?: string;
+  location?: string;
+  deadline?: string;
+  apply_link?: string;
+  opp_category?: string;
+  skills_req?: string;
+  is_verified?: boolean;
 }
 
 export interface TResponse<T> {
@@ -32,6 +40,20 @@ const postApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Post'],
     }),
+    searchPosts: builder.query<TResponse<IPost[]>, string>({
+      query: (q) => ({
+        url: `/posts/search?q=${encodeURIComponent(q)}`,
+        method: 'GET',
+      }),
+      providesTags: ['Post'],
+    }),
+    getPostsByType: builder.query<TResponse<IPost[]>, string>({
+      query: (type) => ({
+        url: `/posts/type/${type}`,
+        method: 'GET',
+      }),
+      providesTags: (_result, _error, _type) => [{ type: 'Post', id: `TYPE_${_type}` }, 'Post'],
+    }),
     getPostById: builder.query<TResponse<IPost>, string | number>({
       query: (id) => ({
         url: `/posts/${id}`,
@@ -42,6 +64,14 @@ const postApi = baseApi.injectEndpoints({
     createPost: builder.mutation<TResponse<{ post_id: number }>, Partial<IPost>>({
       query: (data) => ({
         url: '/posts',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Post'],
+    }),
+    createOpportunityPost: builder.mutation<TResponse<{ post_id: number }>, Partial<IPost>>({
+      query: (data) => ({
+        url: '/posts/opportunity',
         method: 'POST',
         body: data,
       }),
@@ -80,22 +110,25 @@ const postApi = baseApi.injectEndpoints({
         url: `/posts/user/${username}/saved`,
         method: 'GET',
       }),
-      providesTags: ['Post'],
+      providesTags: ['SavedPost'],
     }),
     toggleSavePost: builder.mutation<TResponse<void>, number>({
       query: (id) => ({
         url: `/posts/${id}/save`,
         method: 'POST',
       }),
-      invalidatesTags: ['Post'],
+      invalidatesTags: ['SavedPost'],
     }),
   }),
 });
 
 export const { 
-  useGetAllPostsQuery, 
+  useGetAllPostsQuery,
+  useSearchPostsQuery,
+  useGetPostsByTypeQuery,
   useGetPostByIdQuery, 
   useCreatePostMutation, 
+  useCreateOpportunityPostMutation,
   useDeletePostMutation,
   useGetPostsByUsernameQuery,
   useGetUpvotedPostsQuery,

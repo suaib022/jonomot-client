@@ -90,6 +90,12 @@ const Community = () => {
     <div className="max-w-[1100px] mx-auto w-full px-4 pt-6 pb-12 flex flex-col md:flex-row gap-6">
       {/* Main Content Area */}
       <div className="flex-1 w-full min-w-0">
+        {(community?.is_banned === 'Y' || community?.IS_BANNED === 'Y') && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            {/* <strong className="font-bold">Notice: </strong> */}
+            <span className="block sm:inline">This community has been permanently banned</span>
+          </div>
+        )}
         {/* Header */}
         <div className="bg-white rounded-xl p-6 mb-6">
           <div className="flex items-start gap-4">
@@ -111,29 +117,31 @@ const Community = () => {
                   className="px-4 py-2 border border-gray-300 rounded-full font-bold text-[14px] hover:bg-gray-50 transition-colors hidden sm:block">
                   Create Post
                 </button> */}
-                <button
-                  onClick={isJoined ? handleLeave : handleJoin}
-                  disabled={isJoining || isLeaving}
-                  className={`px-5 py-2 rounded-full font-bold text-[14px] flex items-center gap-2 transition-colors
-                    ${isJoined
-                      ? 'border border-red-200 text-red-600 hover:bg-red-50'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
-                >
-                  {isJoining || isLeaving ? (
-                    <div className={`w-4 h-4 border-2 ${isJoined ? 'border-red-600' : 'border-white'} border-t-transparent rounded-full animate-spin`}></div>
-                  ) : isJoined ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Leave
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-4 h-4" />
-                      Join
-                    </>
-                  )}
-                </button>
+                {(isJoined || user?.role !== 'admin') && (
+                  <button
+                    onClick={isJoined ? handleLeave : handleJoin}
+                    disabled={isJoining || isLeaving}
+                    className={`px-5 py-2 rounded-full font-bold text-[14px] flex items-center gap-2 transition-colors
+                      ${isJoined
+                        ? 'border border-red-200 text-red-600 hover:bg-red-50'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                  >
+                    {isJoining || isLeaving ? (
+                      <div className={`w-4 h-4 border-2 ${isJoined ? 'border-red-600' : 'border-white'} border-t-transparent rounded-full animate-spin`}></div>
+                    ) : isJoined ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Leave
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" />
+                        Join
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </div>

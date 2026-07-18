@@ -8,6 +8,7 @@ export type TUser = {
   username?: string;
   role: 'user' | 'admin';
   email: string;
+  is_banned?: boolean;
   iat?: number;
   exp?: number;
 };
@@ -34,10 +35,15 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
     },
+    updateUser: (state, action: PayloadAction<Partial<TUser>>) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+      }
+    },
   },
 });
 
-export const { setUser, logOut } = authSlice.actions;
+export const { setUser, logOut, updateUser } = authSlice.actions;
 export default authSlice.reducer;
 
 export const useCurrentToken = (state: RootState) => state.auth.token;

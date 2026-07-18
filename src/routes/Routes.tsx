@@ -7,6 +7,10 @@ import PostDetail from '../pages/PostDetail';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Profile from '../pages/Profile/Profile';
+import News from '../pages/News';
+import Opportunities from '../pages/Opportunities';
+import Search from '../pages/Search';
+import AdminDashboard from '../pages/AdminDashboard';
 
 import { PublicRoute } from './PublicRoute';
 
@@ -32,8 +36,24 @@ const router = createBrowserRouter([
         element: <PostDetail />,
       },
       {
-        path: '/u/:username',
+        path: '/u/:userId',
         element: <Profile />,
+      },
+      {
+        path: '/news',
+        element: <News />,
+      },
+      {
+        path: '/opportunities',
+        element: <Opportunities />,
+      },
+      {
+        path: '/search',
+        element: <Search />,
+      },
+      {
+        path: '/admin',
+        element: <AdminDashboard />,
       }
     ]
   },

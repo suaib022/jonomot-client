@@ -138,7 +138,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ isOp
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       maxLength={21}
-                      className="w-full bg-gray-50 border-none rounded-xl px-5 py-4 text-[16px] font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full bg-gray-50 text-gray-900 border-none rounded-xl px-5 py-4 text-[16px] font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="text-right text-gray-500 text-[13px] mt-1 pr-2">
@@ -153,7 +153,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ isOp
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       maxLength={500}
-                      className="w-full bg-gray-50 border-none rounded-xl px-5 py-4 text-[16px] min-h-[160px] resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full bg-gray-50 text-gray-900 border-none rounded-xl px-5 py-4 text-[16px] min-h-[160px] resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="text-right text-gray-500 text-[13px] mt-1 pr-2">

@@ -2,7 +2,7 @@ import React from 'react';
 import { useGetAllPostsQuery } from '../../redux/features/post/postApi';
 import { PostCard } from './PostCard';
 
-export const PostFeed: React.FC<{ communityId?: number }> = ({ communityId }) => {
+export const PostFeed: React.FC<{ communityId?: number; postType?: string }> = ({ communityId, postType }) => {
   const { data: res, isLoading, isError } = useGetAllPostsQuery();
 
   if (isLoading) {
@@ -21,6 +21,9 @@ export const PostFeed: React.FC<{ communityId?: number }> = ({ communityId }) =>
 
   let posts = res?.data || [];
   
+  if (postType && postType !== 'all') {
+    posts = posts.filter((p: any) => p.post_type === postType || p.POST_TYPE === postType);
+  }
 
   if (communityId) {
     posts = posts.filter((p: any) => p.community_id === communityId || p.COMMUNITY_ID === communityId);

@@ -62,6 +62,10 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       toast.error('Admins are not allowed to comment');
       return;
     }
+    if (user.is_banned) {
+      toast.error('Banned users are not allowed to comment');
+      return;
+    }
     if (!commentBody.trim()) {
       return;
     }
@@ -75,28 +79,28 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     }
   };
 
-  const isDisabled = !user || user.role === 'admin';
-
   return (
     <div>
-      <form onSubmit={handleSubmit} className="mb-8">
-        <textarea
-          value={commentBody}
-          onChange={(e) => setCommentBody(e.target.value)}
-          placeholder={isDisabled ? 'You cannot comment' : 'What are your thoughts?'}
-          disabled={isDisabled || isCreating}
-          className="w-full min-h-[100px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y disabled:bg-gray-100"
-        />
-        <div className="flex justify-end mt-2">
-          <button
-            type="submit"
-            disabled={isDisabled || isCreating || !commentBody.trim()}
-            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isCreating ? 'Posting...' : 'Comment'}
-          </button>
-        </div>
-      </form>
+      {user?.role !== 'admin' && (
+        <form onSubmit={handleSubmit} className="mb-8">
+          <textarea
+            value={commentBody}
+            onChange={(e) => setCommentBody(e.target.value)}
+            placeholder={!user ? 'You must be logged in to comment' : user.is_banned ? 'Banned users cannot comment' : 'What are your thoughts?'}
+            disabled={!user || user.is_banned || isCreating}
+            className="w-full bg-white text-gray-900 min-h-[100px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y disabled:bg-gray-100"
+          />
+          <div className="flex justify-end mt-2">
+            <button
+              type="submit"
+              disabled={!user || user.is_banned || isCreating || !commentBody.trim()}
+              className="px-4 py-2 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isCreating ? 'Posting...' : 'Comment'}
+            </button>
+          </div>
+        </form>
+      )}
 
       {isLoading ? (
         <div className="text-gray-500">Loading comments...</div>

@@ -1,6 +1,6 @@
 import React from 'react';
 
-type TabType = 'OVERVIEW' | 'POSTS' | 'COMMENTS' | 'SAVED' | 'UPVOTED' | 'DOWNVOTED';
+type TabType = 'POSTS' | 'COMMENTS' | 'SAVED' | 'UPVOTED' | 'DOWNVOTED';
 
 interface ProfileTabsProps {
   activeTab: TabType;
@@ -9,7 +9,6 @@ interface ProfileTabsProps {
 
 const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, setActiveTab }) => {
   const tabs: { id: TabType; label: string }[] = [
-    { id: 'OVERVIEW', label: 'Overview' },
     { id: 'POSTS', label: 'Posts' },
     { id: 'COMMENTS', label: 'Comments' },
     { id: 'SAVED', label: 'Saved' },

@@ -4,8 +4,10 @@ import type { IPost } from '../../redux/features/post/postApi';
 import { useDeletePostMutation, useToggleSavePostMutation } from '../../redux/features/post/postApi';
 import { useAppSelector } from '../../redux/hooks';
 import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Briefcase, MapPin, Calendar, ExternalLink, ShieldCheck } from 'lucide-react';
 import { useGetMyVotesQuery, useCastVoteMutation } from '../../redux/features/vote/voteApi';
+import { useGetSavedPostsQuery } from '../../redux/features/post/postApi';
+import ShareModal from '../ui/ShareModal';
 
 interface PostCardProps {
   post: IPost;
@@ -61,15 +63,32 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   });
   
   const [toggleSavePost] = useToggleSavePostMutation();
+  const { data: savedPostsRes } = useGetSavedPostsQuery(currentUser?.username || '', { skip: !currentUser });
+  const savedPosts = savedPostsRes?.data || [];
+  const serverIsSaved = savedPosts.some((p) => p.post_id === postId);
+  const [localIsSaved, setLocalIsSaved] = React.useState<boolean | null>(null);
+  const isSaved = localIsSaved !== null ? localIsSaved : serverIsSaved;
+
+  // Keep local state in sync when server data arrives
+  React.useEffect(() => {
+    setLocalIsSaved(null); // reset so server value takes over after refetch
+  }, [serverIsSaved]);
 
   const myVotes = myVotesRes?.data || [];
   const myVote = myVotes.find(v => v.TARGET_ID === postId && v.TARGET_TYPE === 'POST');
 
-  const username = (post as any).username || (post as any).USERNAME;
-  const displayUsername = username ? username : `user_${userId}`;
+  const displayUsername = `User_${userId}`;
 
-  const isOwner = (currentUser?.userId || (currentUser as any)?.user_id) == userId;
+  const isOwner = currentUser?.username === (post.creator_name || (post as any).CREATOR_NAME);
   const isAdmin = currentUser?.role === 'admin';
+  const isBanned = currentUser?.is_banned;
+  
+  const disableVote = isAdmin || isBanned;
+  const voteTitle = isAdmin ? "Admins cannot vote" : isBanned ? "Banned users cannot vote" : "Vote";
+
+  const disableComment = isAdmin || isBanned;
+  const commentTitle = isAdmin ? "Admins cannot comment" : isBanned ? "Banned users cannot comment" : "Comment";
+
   console.log('PostCard Debug ->', {
     postUserId: userId, 
     currentUser: currentUser, 
@@ -93,6 +112,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       try {
         await deletePost(postId).unwrap();
         toast.success('Post deleted successfully');
+        if (window.location.pathname.startsWith('/post/')) {
+          navigate('/');
+        }
       } catch (err: any) {
         toast.error(err.data?.message || 'Failed to delete post');
       }
@@ -109,6 +131,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       toast.error('Admins are not allowed to vote.');
       return;
     }
+    if (isBanned) {
+      toast.error('Banned users are not allowed to vote.');
+      return;
+    }
     try {
       await castVote({ target_id: postId, target_type: 'POST', vote_type: type }).unwrap();
     } catch (err: any) {
@@ -122,12 +148,26 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       toast.error('You must be logged in to save posts.');
       return;
     }
+    if (isAdmin) {
+      toast.error('Admins are not allowed to save posts.');
+      return;
+    }
+    const nextSaved = !isSaved;
+    setLocalIsSaved(nextSaved); // optimistic update — immediate UI feedback
     try {
       await toggleSavePost(postId).unwrap();
-      toast.success('Saved status updated');
+      toast.success(nextSaved ? 'Post saved successfully' : 'Post removed from saved');
     } catch (err: any) {
+      setLocalIsSaved(!nextSaved); // revert on error
       toast.error(err.data?.message || 'Failed to save post');
     }
+  };
+
+  const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsShareModalOpen(true);
   };
 
   return (
@@ -156,15 +196,85 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </>
           )}
           <span>
-            Posted by <Link to={`/u/${displayUsername}`} onClick={(e) => e.stopPropagation()} className="hover:underline font-bold">u/{displayUsername}</Link>
+            Posted by <Link to={`/u/${userId}`} onClick={(e) => e.stopPropagation()} className="hover:underline font-bold">u/{displayUsername}</Link>
           </span>
           <span className="mx-1">{timeStr}</span>
         </div>
 
         {/* Title */}
-        <h3 className="text-[20px] font-semibold text-gray-900 leading-snug mb-2 pr-4">
+        <h3 className="text-[20px] font-semibold text-gray-900 leading-snug mb-2 pr-4 flex flex-wrap items-center gap-2">
           {title}
+          {(post.post_type === 'news' || (post as any).POST_TYPE === 'news') && (
+            <span className="bg-red-100 text-red-700 text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+              News
+            </span>
+          )}
+          {(post.post_type === 'opportunity' || (post as any).POST_TYPE === 'opportunity') && (
+            <span className="bg-blue-100 text-blue-700 text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+              Opportunity
+            </span>
+          )}
         </h3>
+
+        {/* Opportunity Card (if post_type === 'opportunity') */}
+        {((post.post_type || (post as any).POST_TYPE) === 'opportunity') && (
+          <div className="mb-3 bg-white border border-gray-200 rounded-[12px] p-4 flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h4 className="font-bold text-[16px] text-gray-900 flex items-center gap-1.5">
+                  <Briefcase className="w-4 h-4 text-blue-600" />
+                  {post.org_name || (post as any).ORG_NAME || 'Organization Name'}
+                  {(post.is_verified || (post as any).IS_VERIFIED === 'Y') && (
+                    <span title="Verified Opportunity"><ShieldCheck className="w-4 h-4 text-green-500" /></span>
+                  )}
+                </h4>
+                <div className="flex flex-wrap items-center gap-3 text-[13px] text-gray-600 mt-1.5">
+                  {(post.location || (post as any).LOCATION) && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {(post.location || (post as any).LOCATION)}
+                    </div>
+                  )}
+                  {(post.deadline || (post as any).DEADLINE) && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5" />
+                      Deadline: {new Date(post.deadline || (post as any).DEADLINE).toLocaleDateString()}
+                    </div>
+                  )}
+                  {(post.opp_category || (post as any).OPP_CATEGORY) && (
+                    <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                      {post.opp_category || (post as any).OPP_CATEGORY}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {(post.apply_link || (post as any).APPLY_LINK) && (
+                <a
+                  href={post.apply_link || (post as any).APPLY_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="shrink-0 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[13px] px-4 py-2 rounded-full flex items-center gap-1.5 transition-colors"
+                >
+                  Apply <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+            </div>
+            
+            {(post.skills_req || (post as any).SKILLS_REQ) && (
+              <div className="pt-2 mt-1 border-t border-gray-100">
+                <p className="text-[12px] text-gray-500 font-semibold mb-1.5">Required Skills:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {((post.skills_req || (post as any).SKILLS_REQ) as string).split(',').map((skill, idx) => (
+                    <span key={idx} className="bg-gray-100 text-gray-700 text-[12px] px-2 py-0.5 rounded-md">
+                      {skill.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Body Content */}
         {body && (
@@ -236,8 +346,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           {/* Upvote/Downvote Pill */}
           <div className="flex items-center bg-white border border-gray-200 rounded-full h-9 transition-colors">
             <button 
-              onClick={(e) => handleVote(e, 1)}
-              className={`flex items-center justify-center w-8 h-full rounded-l-full hover:bg-gray-100 ${myVote?.VOTE_TYPE === 1 ? 'text-orange-600 bg-orange-50' : 'text-gray-700 hover:text-orange-600'}`}
+              onClick={disableVote ? undefined : (e) => handleVote(e, 1)}
+              disabled={disableVote}
+              className={`flex items-center justify-center w-8 h-full rounded-l-full hover:bg-gray-100 ${myVote?.VOTE_TYPE === 1 ? 'text-orange-600 bg-orange-50' : 'text-gray-700 hover:text-orange-600'} ${disableVote ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={voteTitle}
             >
               <svg className="w-5 h-5" fill={myVote?.VOTE_TYPE === 1 ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l-5 7h3v11h4V10h3z" />
@@ -247,8 +359,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
               {upvotes - downvotes}
             </span>
             <button 
-              onClick={(e) => handleVote(e, -1)}
-              className={`flex items-center justify-center w-8 h-full rounded-r-full hover:bg-gray-100 ${myVote?.VOTE_TYPE === -1 ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:text-indigo-600'}`}
+              onClick={disableVote ? undefined : (e) => handleVote(e, -1)}
+              disabled={disableVote}
+              className={`flex items-center justify-center w-8 h-full rounded-r-full hover:bg-gray-100 ${myVote?.VOTE_TYPE === -1 ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:text-indigo-600'} ${disableVote ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={voteTitle}
             >
               <svg className="w-5 h-5" fill={myVote?.VOTE_TYPE === -1 ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 21l-5-7h3V3h4v11h3z" />
@@ -258,8 +372,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
           {/* Comments Pill */}
           <button 
-            onClick={(e) => { e.stopPropagation(); navigate(`/post/${postId}`); }}
-            className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold text-gray-800 transition-colors"
+            onClick={disableComment ? undefined : (e) => {
+              e.stopPropagation();
+              navigate(`/post/${postId}`);
+            }}
+            disabled={disableComment}
+            className={`flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold text-gray-800 transition-colors ${disableComment ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={commentTitle}
           >
             <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
@@ -269,7 +388,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           
           {/* Share Pill */}
           <button 
-            onClick={(e) => { e.stopPropagation(); }}
+            onClick={handleShare}
             className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold text-gray-800 transition-colors"
           >
             <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
@@ -281,12 +400,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           {/* Save Pill */}
           <button 
             onClick={handleSave}
-            className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold text-gray-800 transition-colors"
+            disabled={isAdmin}
+            className={`flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-full h-9 px-3.5 text-[13px] font-bold transition-colors ${isAdmin ? 'opacity-50 cursor-not-allowed' : ''} ${isSaved ? 'text-blue-600 bg-blue-50' : 'text-gray-800'}`}
           >
-            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+            <svg className={`w-5 h-5 ${isSaved ? 'text-blue-600' : 'text-gray-700'}`} fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>
-            Save
+            {isSaved ? 'Saved' : 'Save'}
           </button>
 
           {/* Delete Button (Owner Only) */}
@@ -302,6 +422,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           )}
         </div>
       </div>
+
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={() => setIsShareModalOpen(false)} 
+        url={`${window.location.origin}/post/${postId}`} 
+        title={title || 'Check out this post on Jonomot'}
+      />
     </div>
   );
 };

@@ -22,7 +22,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ isCollapsed = false, o
 
   const rawCommunities = communitiesResponse?.data || [];
   const joinedCommunities = joinedCommunitiesResponse?.data || [];
-  
+
   const communities = [...rawCommunities].sort((a: any, b: any) => {
     const aJoined = joinedCommunities.some((jc: any) => jc.community_id === a.community_id) ? 1 : 0;
     const bJoined = joinedCommunities.some((jc: any) => jc.community_id === b.community_id) ? 1 : 0;
@@ -48,8 +48,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ isCollapsed = false, o
 
   const links = [
     { name: 'Home', path: '/', icon: 'home' },
-    { name: 'Popular', path: '/popular', icon: 'popular' },
     { name: 'News', path: '/news', icon: 'news' },
+    { name: 'Opportunities', path: '/opportunities', icon: 'opportunities' },
   ];
 
   const getIcon = (type: string, active: boolean) => {
@@ -60,16 +60,16 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ isCollapsed = false, o
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.592 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
           </svg>
         );
-      case 'popular':
-        return (
-          <svg className={`w-6 h-6 stroke-current ${active ? 'text-primary' : 'text-gray-700'} fill-none`} viewBox="0 0 24 24" strokeWidth="1.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
-          </svg>
-        );
       case 'news':
         return (
           <svg className={`w-6 h-6 stroke-current ${active ? 'text-primary' : 'text-gray-700'} fill-none`} viewBox="0 0 24 24" strokeWidth="1.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 6h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5h2.828c.22 0 .434.088.586.244l2.252 2.253a.825.825 0 01.242.586v8.467c0 .621-.504 1.125-1.125 1.125h-4.875M16.5 7.5V18m0-10.5h-8.25a2.25 2.25 0 00-2.25 2.25v8.25m8.25-10.5v10.5m-8.25-10.5H5.625c-.621 0-1.125.504-1.125 1.125v8.25" />
+          </svg>
+        );
+      case 'opportunities':
+        return (
+          <svg className={`w-6 h-6 stroke-current ${active ? 'text-primary' : 'text-gray-700'} fill-none`} viewBox="0 0 24 24" strokeWidth="1.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
           </svg>
         );
       default:
@@ -126,7 +126,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ isCollapsed = false, o
 
         {visibleCommunities.map((community: any) => {
           if (!community || !community.name) return null;
-          
+
           const isJoined = joinedCommunities.some(
             (jc: any) => jc.community_id === community.community_id
           );

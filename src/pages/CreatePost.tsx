@@ -4,8 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { ChevronDown, Image as ImageIcon, X } from 'lucide-react';
-import { useCreatePostMutation } from '../redux/features/post/postApi';
+import { ChevronDown, Image as ImageIcon, X, Briefcase, MessageSquare, HelpCircle, Link as LinkIcon } from 'lucide-react';
+import { useCreatePostMutation, useCreateOpportunityPostMutation } from '../redux/features/post/postApi';
 import { useGetJoinedCommunitiesQuery } from '../redux/features/community/communityApi';
 import { useAppSelector } from '../redux/hooks';
 import ReactQuill from 'react-quill-new';
@@ -17,6 +17,12 @@ const IMGBB_API_URL = 'https://api.imgbb.com/1/upload';
 const createPostSchema = z.object({
   title: z.string().min(1, 'Title is required').max(300, 'Title must be 300 characters or less'),
   body: z.string().optional(),
+  org_name: z.string().optional(),
+  location: z.string().optional(),
+  deadline: z.string().optional(),
+  apply_link: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  opp_category: z.string().optional(),
+  skills_req: z.string().optional(),
 });
 
 type CreatePostFormValues = z.infer<typeof createPostSchema>;
@@ -36,7 +42,23 @@ export default function CreatePost() {
   const { data: joinedResponse } = useGetJoinedCommunitiesQuery(undefined, { skip: !user });
   const joinedCommunities = joinedResponse?.data || [];
 
-  const [createPost, { isLoading }] = useCreatePostMutation();
+  React.useEffect(() => {
+    if (user?.role === 'admin') {
+      toast.error('Admins cannot create posts.');
+      navigate('/');
+    } else if (user?.is_banned) {
+      toast.error('Banned users cannot create posts.');
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  const [createPost, { isLoading: isCreatingPost }] = useCreatePostMutation();
+  const [createOpportunityPost, { isLoading: isCreatingOpp }] = useCreateOpportunityPostMutation();
+  
+  const [postType, setPostType] = useState<'discussion' | 'opportunity' | 'news' | 'question' | 'link'>('discussion');
+
+  const isLoading = isCreatingPost || isCreatingOpp;
+
   const [community, setCommunity] = useState<{ id: number; name: string } | null>(
     location.state?.community ? { id: Number(location.state?.community_id) || 0, name: location.state?.community } : null
   );
@@ -127,15 +149,30 @@ export default function CreatePost() {
         toast.dismiss('upload');
       }
 
-      const payload = {
+      const basePayload = {
         title: data.title,
         body: data.body || '',
-        post_type: 'discussion' as const,
         media: mediaUrls,
         community_id: community?.id ? Number(community.id) : undefined,
       };
 
-      await createPost(payload).unwrap();
+      if (postType === 'discussion') {
+        await createPost({ ...basePayload, post_type: 'discussion' }).unwrap();
+      } else if (postType === 'news') {
+        await createPost({ ...basePayload, post_type: 'news' }).unwrap();
+      } else {
+        await createOpportunityPost({
+          ...basePayload,
+          post_type: 'opportunity',
+          org_name: data.org_name,
+          location: data.location,
+          deadline: data.deadline,
+          apply_link: data.apply_link,
+          opp_category: data.opp_category,
+          skills_req: data.skills_req,
+        }).unwrap();
+      }
+
       toast.success('Post created successfully!');
       navigate('/');
     } catch (error: any) {
@@ -195,7 +232,51 @@ export default function CreatePost() {
           )}
         </div>
 
-        {/* Tabs Removed */}
+        {/* Post Type Tabs */}
+        <div className="flex border-b border-gray-200 mb-6 w-full max-w-[500px]">
+          <button
+            type="button"
+            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[15px] transition-colors border-b-2 ${postType === 'discussion' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            onClick={() => setPostType('discussion')}
+          >
+            <MessageSquare className="w-5 h-5" />
+            Discussion
+          </button>
+          <button
+            type="button"
+            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[15px] transition-colors border-b-2 ${postType === 'opportunity' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            onClick={() => setPostType('opportunity')}
+          >
+            <Briefcase className="w-5 h-5" />
+            Opportunity
+          </button>
+          <button
+            type="button"
+            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[15px] transition-colors border-b-2 ${postType === 'news' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            onClick={() => setPostType('news')}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+            </svg>
+            News
+          </button>
+          <button
+            type="button"
+            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[15px] transition-colors border-b-2 ${postType === 'question' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            onClick={() => setPostType('question')}
+          >
+            <HelpCircle className="w-5 h-5" />
+            Question
+          </button>
+          <button
+            type="button"
+            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[15px] transition-colors border-b-2 ${postType === 'link' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            onClick={() => setPostType('link')}
+          >
+            <LinkIcon className="w-5 h-5" />
+            Link
+          </button>
+        </div>
 
         {/* Main Editor Area */}
         <div className="flex flex-col gap-4">
@@ -207,7 +288,7 @@ export default function CreatePost() {
               <input
                 type="text"
                 placeholder="Title"
-                className="w-full border border-gray-300 rounded-[20px] px-5 py-4 text-[18px] focus:outline-none focus:border-gray-900 placeholder-gray-500 shadow-sm"
+                className="w-full bg-white text-gray-900 border border-gray-300 rounded-[20px] px-5 py-4 text-[18px] focus:outline-none focus:border-gray-900 placeholder-gray-500 shadow-sm"
                 {...register('title')}
               />
               {!titleValue && (
@@ -218,6 +299,68 @@ export default function CreatePost() {
               </div>
               {errors.title && <p className="text-red-500 text-xs mt-6">{errors.title.message}</p>}
             </div>
+
+            {/* Opportunity specific fields */}
+            {postType === 'opportunity' && (
+              <div className="flex flex-col gap-4 mt-2">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Organization Name"
+                      className="w-full bg-white text-gray-900 border border-gray-300 rounded-[12px] px-4 py-3 text-[15px] focus:outline-none focus:border-gray-900 placeholder-gray-500"
+                      {...register('org_name')}
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Location (e.g., Remote, NY)"
+                      className="w-full bg-white text-gray-900 border border-gray-300 rounded-[12px] px-4 py-3 text-[15px] focus:outline-none focus:border-gray-900 placeholder-gray-500"
+                      {...register('location')}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Category (e.g., Internship, Job)"
+                      className="w-full bg-white text-gray-900 border border-gray-300 rounded-[12px] px-4 py-3 text-[15px] focus:outline-none focus:border-gray-900 placeholder-gray-500"
+                      {...register('opp_category')}
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="date"
+                      placeholder="Deadline"
+                      className="w-full bg-white text-gray-900 border border-gray-300 rounded-[12px] px-4 py-3 text-[15px] focus:outline-none focus:border-gray-900 text-gray-700"
+                      {...register('deadline')}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <input
+                    type="url"
+                    placeholder="Application Link (URL)"
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-[12px] px-4 py-3 text-[15px] focus:outline-none focus:border-gray-900 placeholder-gray-500"
+                    {...register('apply_link')}
+                  />
+                  {errors.apply_link && <p className="text-red-500 text-xs mt-1">{errors.apply_link.message}</p>}
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Skills Required (comma separated)"
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-[12px] px-4 py-3 text-[15px] focus:outline-none focus:border-gray-900 placeholder-gray-500"
+                    {...register('skills_req')}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Add Tags Pill */}
             {/* <div className="mt-3 mb-1">

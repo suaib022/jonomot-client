@@ -150,6 +150,7 @@ const Register: React.FC = () => {
               <Input 
                 size="large" 
                 placeholder="Email address" 
+                autoComplete="email"
                 className="h-[40px] text-[15px] rounded-[6px] px-3 border-[#ccd0d5] bg-[#f5f6f7] hover:border-[#ccd0d5] focus:border-[#1877f2] focus:bg-white" 
               />
             </Form.Item>
@@ -169,6 +170,7 @@ const Register: React.FC = () => {
               <Input 
                 size="large" 
                 placeholder="Username" 
+                autoComplete="username"
                 className="h-[40px] text-[15px] rounded-[6px] px-3 border-[#ccd0d5] bg-[#f5f6f7] hover:border-[#ccd0d5] focus:border-[#1877f2] focus:bg-white" 
               />
             </Form.Item>
@@ -185,6 +187,7 @@ const Register: React.FC = () => {
               <Input.Password 
                 size="large" 
                 placeholder="Password" 
+                autoComplete="new-password"
                 className="h-[40px] text-[15px] rounded-[6px] px-3 border-[#ccd0d5] bg-[#f5f6f7] hover:border-[#ccd0d5] focus:border-[#1877f2] focus:bg-white" 
               />
             </Form.Item>
